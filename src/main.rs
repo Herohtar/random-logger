@@ -1,7 +1,14 @@
-use std::{env::args, error::Error, thread::sleep, time::Duration};
+use std::{
+    env::args,
+    error::Error,
+    sync::{atomic::AtomicBool, Arc},
+    thread::sleep,
+    time::Duration,
+};
 
 use chrono::Local;
 use rand::{distributions::Uniform, prelude::Distribution, thread_rng};
+use signal_hook::consts::SIGTERM;
 
 const DEFAULT_MIN_DELAY: u64 = 100;
 const DEFAULT_MAX_DELAY: u64 = 5000;
@@ -9,6 +16,10 @@ const DEFAULT_COUNT_LIMIT: u64 = 0;
 const LOG_MESSAGES: [&str; 4] = ["ERROR An error is usually an exception that has been caught and not handled.", "INFO This is less important than debug log and is often used to provide context in the current task.", "WARN A warning that should be ignored is usually at this level and should be actionable.", "DEBUG This is a debug log that shows a log that can be ignored."];
 
 fn main() -> Result<(), Box<dyn Error>> {
+    // Immediately terminate on SIGTERM so that we won't cause `docker stop` to hang
+    let term = Arc::new(AtomicBool::new(true));
+    signal_hook::flag::register_conditional_shutdown(SIGTERM, 0, Arc::clone(&term))?;
+
     let mut args = args().skip(1);
 
     let min_delay = match args.next() {
