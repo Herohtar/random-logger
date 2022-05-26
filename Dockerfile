@@ -1,4 +1,4 @@
-FROM rust:1.60.0-alpine3.15 as build
+FROM rust:1.61.0-alpine3.15 as build
 
 COPY . ./src/random-logger
 
